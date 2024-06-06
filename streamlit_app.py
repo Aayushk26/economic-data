@@ -45,8 +45,30 @@ def display_events(events):
         # Move IST Time and Day columns to the first two positions
         events = events[['IST Time', 'Day'] + [col for col in events.columns if col not in ['IST Time', 'Day']]]
 
-        # Set display width to show all columns
-        st.dataframe(events, width=0)
+        # Style the dataframe based on event importance
+        def highlight_importance(val):
+            if val == 'high':
+                color = 'lightgreen'
+            elif val == 'medium':
+                color = 'lightblue'
+            elif val == 'low':
+                color = 'lightyellow'
+            else:
+                color = ''
+            return f'background-color: {color}'
+
+        events_styled = events.style.applymap(highlight_importance, subset=['importance'])
+
+        # Display the legend
+        st.markdown(
+            "<div style='background-color:lightgreen;padding:8px;margin-bottom:8px;'>High Importance</div>"
+            "<div style='background-color:lightblue;padding:8px;margin-bottom:8px;'>Medium Importance</div>"
+            "<div style='background-color:lightyellow;padding:8px;margin-bottom:8px;'>Low Importance</div>",
+            unsafe_allow_html=True
+        )
+
+        # Display the styled dataframe
+        st.dataframe(events_styled, width=0)
 
     else:
         st.write("No upcoming events found.")
