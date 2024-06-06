@@ -6,6 +6,7 @@ import time
 import threading
 import smtplib
 from email.mime.text import MIMEText
+import pandas as pd
 
 # Function to get economic calendar data
 def get_economic_calendar(countries, from_date, to_date):
@@ -35,18 +36,20 @@ def display_events(events):
         st.write("No upcoming events found.")
         return
 
+    # Create a DataFrame to store the events
+    df = pd.DataFrame(events, columns=['Event', 'Date', 'Country'])
+
+    # Calculate days from today
+    today = datetime.today()
+    df['Days from Today'] = (pd.to_datetime(df['Date'], format='%d/%m/%Y') - today).dt.days
+
     st.write("Upcoming Events:")
-    for event in events:
-        st.write(f"Data: {event}")
-        if 'event' in event and 'date' in event and 'country' in event:
-            st.write(f"Event: {event['event']}, Date: {event['date']}, Country: {event['country']}")
-        else:
-            st.warning("Incomplete data for an event.")
+    st.dataframe(df)
 
 # Function to send notification emails
 def send_notification(event, email_list):
-    subject = f"Reminder: Upcoming event '{event['event']}'"
-    body = f"Upcoming event '{event['event']}' on {event['date']} in {event['country']}."
+    subject = f"Reminder: Upcoming event '{event['Event']}'"
+    body = f"Upcoming event '{event['Event']}' on {event['Date']} in {event['Country']}."
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = "your_email@example.com"
@@ -57,14 +60,14 @@ def send_notification(event, email_list):
             server.starttls()
             server.login("your_email@example.com", "your_password")
             server.sendmail("your_email@example.com", email_list, msg.as_string())
-            st.write(f"🔔 Email notification sent for event '{event['event']}' on {event['date']}")
+            st.write(f"🔔 Email notification sent for event '{event['Event']}' on {event['Date']}")
     except Exception as e:
         st.error(f"Failed to send email: {e}")
 
 # Function to schedule notifications
 def schedule_notifications(events, email_list):
     for event in events:
-        event_date = datetime.strptime(event['date'], '%d/%m/%Y')
+        event_date = datetime.strptime(event['Date'], '%d/%m/%Y')
         notification_time = event_date - timedelta(weeks=2)
         schedule_time = datetime.combine(notification_time, datetime.min.time()) + timedelta(hours=9)
 
