@@ -58,7 +58,7 @@ def display_events(events):
             elif val == 'medium':
                 color = 'lightblue'
             elif val == 'low':
-                color = 'lightyellow'
+                color = 'lightgreen'
             else:
                 color = ''
             return f'background-color: {color}'
