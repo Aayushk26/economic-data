@@ -2,6 +2,7 @@ import streamlit as st
 import investpy
 from datetime import datetime, timedelta
 import pandas as pd
+import pytz
 
 # Function to get economic calendar data
 def get_economic_calendar(countries, from_date, to_date):
@@ -12,6 +13,16 @@ def get_economic_calendar(countries, from_date, to_date):
         st.error(f"Error fetching data for {countries}: {e}")
         return None
 
+# Function to convert time to Indian Standard Time (IST)
+def convert_to_ist(time_str):
+    try:
+        time_utc = datetime.strptime(time_str, "%H:%M").time()
+        utc = pytz.utc.localize(datetime.combine(datetime.today(), time_utc))
+        ist = utc.astimezone(pytz.timezone('Asia/Kolkata'))
+        return ist.strftime('%H:%M')
+    except Exception as e:
+        return time_str
+
 # Function to display events
 def display_events(events):
     if events is None:
@@ -19,6 +30,12 @@ def display_events(events):
         return
 
     if not events.empty:
+        # Add a column for the day of the event
+        events['Day'] = pd.to_datetime(events['date'], format='%d/%m/%Y').dt.strftime('%A')
+
+        # Convert time to Indian Standard Time (IST)
+        events['Time'] = events['time'].apply(convert_to_ist)
+
         st.write("Upcoming Events:")
         st.dataframe(events)
     else:
