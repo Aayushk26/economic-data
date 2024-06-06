@@ -31,8 +31,17 @@ def filter_upcoming_events(data):
 
 # Function to display events
 def display_events(events):
+    if not events:
+        st.write("No upcoming events found.")
+        return
+
+    st.write("Upcoming Events:")
     for event in events:
-        st.write(f"Event: {event['event']}, Date: {event['date']}, Country: {event['country']}")
+        st.write(f"Data: {event}")
+        if 'event' in event and 'date' in event and 'country' in event:
+            st.write(f"Event: {event['event']}, Date: {event['date']}, Country: {event['country']}")
+        else:
+            st.warning("Incomplete data for an event.")
 
 # Function to send notification emails
 def send_notification(event, email_list):
