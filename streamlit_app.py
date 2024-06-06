@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 # Function to get economic calendar data
 def get_economic_calendar(country, from_date, to_date):
     try:
-        data = investpy.news.economic_calendar(country=country, from_date=from_date, to_date=to_date)
+        data = investpy.economic_calendar(country=country, from_date=from_date, to_date=to_date)
         return data
     except Exception as e:
         st.error(f"Error fetching data for {country}: {e}")
@@ -73,7 +73,7 @@ def main():
     st.title("Economic Calendar Notifications")
 
     # Country selection
-    available_countries = investpy.news.economic_calendar_countries()
+    available_countries = investpy.get_economic_calendar_countries()
     countries = st.multiselect("Select countries:", available_countries, default=["United States", "India"])
 
     # Date range selection
