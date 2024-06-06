@@ -48,6 +48,9 @@ def display_events(events):
         # Calculate days from today and add as a new column
         events['Days from Today'] = (pd.to_datetime(events['date'], format='%d/%m/%Y') - pd.Timestamp('today')).dt.days
 
+        # Filter out events with None importance
+        events = events[events['importance'].notnull()]
+
         # Style the dataframe based on event importance
         def highlight_importance(val):
             if val == 'high':
