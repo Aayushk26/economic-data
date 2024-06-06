@@ -8,12 +8,12 @@ import smtplib
 from email.mime.text import MIMEText
 
 # Function to get economic calendar data
-def get_economic_calendar(country, from_date, to_date):
+def get_economic_calendar(countries, from_date, to_date):
     try:
-        data = investpy.economic_calendar(country=country, from_date=from_date, to_date=to_date)
+        data = investpy.news.economic_calendar(countries=countries, from_date=from_date, to_date=to_date)
         return data
     except Exception as e:
-        st.error(f"Error fetching data for {country}: {e}")
+        st.error(f"Error fetching data for {countries}: {e}")
         return None
 
 # Function to filter events occurring within the next two weeks
@@ -73,7 +73,7 @@ def main():
     st.title("Economic Calendar Notifications")
 
     # Country selection
-    available_countries = investpy.get_economic_calendar_countries()
+    available_countries = investpy.news.economic_calendar_countries()
     countries = st.multiselect("Select countries:", available_countries, default=["United States", "India"])
 
     # Date range selection
@@ -97,11 +97,10 @@ def main():
         to_date = (today + timedelta(days=max_days)).strftime('%d/%m/%Y')
 
         all_events = []
-        for country in countries:
-            data = get_economic_calendar(country, from_date, to_date)
-            if data is not None:
-                upcoming_events = filter_upcoming_events(data)
-                all_events.extend(upcoming_events)
+        data = get_economic_calendar(countries, from_date, to_date)
+        if data is not None:
+            upcoming_events = filter_upcoming_events(data)
+            all_events.extend(upcoming_events)
 
         if all_events:
             display_events(all_events)
