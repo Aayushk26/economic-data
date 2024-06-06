@@ -72,8 +72,13 @@ def run_scheduler():
 def main():
     st.title("Economic Calendar Notifications")
 
-    # Country selection
-    available_countries = investpy.news.economic_calendar_countries()
+    # Manually list available countries
+    available_countries = [
+        "United States", "India", "Australia", "Brazil", "Canada", "China", "France",
+        "Germany", "Italy", "Japan", "Mexico", "Russia", "South Korea", "Spain", 
+        "Switzerland", "United Kingdom"
+    ]
+    
     countries = st.multiselect("Select countries:", available_countries, default=["United States", "India"])
 
     # Date range selection
