@@ -37,7 +37,7 @@ def display_events(events):
     events['Day'] = pd.to_datetime(events['date'], format='%d/%m/%Y').dt.tz_localize('UTC').dt.tz_convert('Asia/Kolkata').dt.strftime('%A')
 
     # Remove id and original time columns, and rename 'zone' column to 'Country'
-    events = events.drop(columns=['id', 'time']).rename(columns={'zone': 'Country'})
+    events = events.drop(columns=['id', 'time', 'currency']).rename(columns={'zone': 'Country'})
 
     # Move IST Time and Day columns to the first two positions
     events = events[['IST Time', 'Day'] + [col for col in events.columns if col not in ['IST Time', 'Day']]]
