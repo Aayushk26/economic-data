@@ -22,7 +22,7 @@ def convert_to_ist(time_str, country):
         time_utc = datetime.strptime(time_str, "%H:%M").time()
         utc = pytz.utc.localize(datetime.combine(datetime.today(), time_utc))
         ist = utc.astimezone(pytz.timezone('Asia/Kolkata'))
-        return ist.strftime('%H:%M')
+        return ist.strftime('%I:%M %p')  # Format time to include AM/PM
     except Exception as e:
         return time_str
 
@@ -36,8 +36,8 @@ def display_events(events):
     events['IST Time'] = events.apply(lambda row: convert_to_ist(row['time'], row['zone']), axis=1)
     events['Day'] = pd.to_datetime(events['date'], format='%d/%m/%Y').dt.tz_localize('UTC').dt.tz_convert('Asia/Kolkata').dt.strftime('%A')
 
-    # Remove id column and rename 'zone' column to 'Country'
-    events = events.drop(columns=['id']).rename(columns={'zone': 'Country'})
+    # Remove id and original time columns, and rename 'zone' column to 'Country'
+    events = events.drop(columns=['id', 'time']).rename(columns={'zone': 'Country'})
 
     # Move IST Time and Day columns to the first two positions
     events = events[['IST Time', 'Day'] + [col for col in events.columns if col not in ['IST Time', 'Day']]]
