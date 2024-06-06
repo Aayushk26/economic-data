@@ -71,7 +71,7 @@ def display_events(events):
             "<div style='" + legend_style + "'>"
             "<div style='background-color:lightcoral;padding:8px;margin-bottom:4px;'>High Importance</div>"
             "<div style='background-color:lightblue;padding:8px;margin-bottom:4px;'>Medium Importance</div>"
-            "<div style='background-color:lightyellow;padding:8px;margin-bottom:4px;'>Low Importance</div>"
+            "<div style='background-color:lightgreen;padding:8px;margin-bottom:4px;'>Low Importance</div>"
             "</div>",
             unsafe_allow_html=True
         )
