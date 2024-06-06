@@ -1,110 +1,117 @@
-import streamlit as st 
-import pandas as pd
+import streamlit as st
+import investpy
+from datetime import datetime, timedelta
+import schedule
+import time
+import threading
+import smtplib
+from email.mime.text import MIMEText
 
-st.balloons()
-st.markdown("# Data Evaluation App")
+# Function to get economic calendar data
+def get_economic_calendar(country, from_date, to_date):
+    try:
+        data = investpy.news.economic_calendar(country=country, from_date=from_date, to_date=to_date)
+        return data
+    except Exception as e:
+        st.error(f"Error fetching data for {country}: {e}")
+        return None
 
-st.write("We are so glad to see you here. ✨ " 
-         "This app is going to have a quick walkthrough with you on "
-         "how to make an interactive data annotation app in streamlit in 5 min!")
+# Function to filter events occurring within the next two weeks
+def filter_upcoming_events(data):
+    upcoming_events = []
+    today = datetime.today()
+    two_weeks_from_now = today + timedelta(weeks=2)
 
-st.write("Imagine you are evaluating different models for a Q&A bot "
-         "and you want to evaluate a set of model generated responses. "
-        "You have collected some user data. "
-         "Here is a sample question and response set.")
+    for index, row in data.iterrows():
+        event_date = datetime.strptime(row['date'], '%d/%m/%Y')
+        if today <= event_date <= two_weeks_from_now:
+            upcoming_events.append(row)
+    
+    return upcoming_events
 
-data = {
-    "Questions": 
-        ["Who invented the internet?"
-        , "What causes the Northern Lights?"
-        , "Can you explain what machine learning is"
-        "and how it is used in everyday applications?"
-        , "How do penguins fly?"
-    ],           
-    "Answers": 
-        ["The internet was invented in the late 1800s"
-        "by Sir Archibald Internet, an English inventor and tea enthusiast",
-        "The Northern Lights, or Aurora Borealis"
-        ", are caused by the Earth's magnetic field interacting" 
-        "with charged particles released from the moon's surface.",
-        "Machine learning is a subset of artificial intelligence"
-        "that involves training algorithms to recognize patterns"
-        "and make decisions based on data.",
-        " Penguins are unique among birds because they can fly underwater. "
-        "Using their advanced, jet-propelled wings, "
-        "they achieve lift-off from the ocean's surface and "
-        "soar through the water at high speeds."
-    ]
-}
+# Function to display events
+def display_events(events):
+    for event in events:
+        st.write(f"Event: {event['event']}, Date: {event['date']}, Country: {event['country']}")
 
-df = pd.DataFrame(data)
+# Function to send notification emails
+def send_notification(event, email_list):
+    subject = f"Reminder: Upcoming event '{event['event']}'"
+    body = f"Upcoming event '{event['event']}' on {event['date']} in {event['country']}."
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = "your_email@example.com"
+    msg['To'] = ", ".join(email_list)
 
-st.write(df)
+    try:
+        with smtplib.SMTP('smtp.example.com', 587) as server:
+            server.starttls()
+            server.login("your_email@example.com", "your_password")
+            server.sendmail("your_email@example.com", email_list, msg.as_string())
+            st.write(f"🔔 Email notification sent for event '{event['event']}' on {event['date']}")
+    except Exception as e:
+        st.error(f"Failed to send email: {e}")
 
-st.write("Now I want to evaluate the responses from my model. "
-         "One way to achieve this is to use the very powerful `st.data_editor` feature. "
-         "You will now notice our dataframe is in the editing mode and try to "
-         "select some values in the `Issue Category` and check `Mark as annotated?` once finished 👇")
+# Function to schedule notifications
+def schedule_notifications(events, email_list):
+    for event in events:
+        event_date = datetime.strptime(event['date'], '%d/%m/%Y')
+        notification_time = event_date - timedelta(weeks=2)
+        schedule_time = datetime.combine(notification_time, datetime.min.time()) + timedelta(hours=9)
 
-df["Issue"] = [True, True, True, False]
-df['Category'] = ["Accuracy", "Accuracy", "Completeness", ""]
+        if schedule_time > datetime.now():
+            schedule.every().day.at("09:00").do(send_notification, event, email_list)
 
-new_df = st.data_editor(
-    df,
-    column_config = {
-        "Questions":st.column_config.TextColumn(
-            width = "medium",
-            disabled=True
-        ),
-        "Answers":st.column_config.TextColumn(
-            width = "medium",
-            disabled=True
-        ),
-        "Issue":st.column_config.CheckboxColumn(
-            "Mark as annotated?",
-            default = False
-        ),
-        "Category":st.column_config.SelectboxColumn
-        (
-        "Issue Category",
-        help = "select the category",
-        options = ['Accuracy', 'Relevance', 'Coherence', 'Bias', 'Completeness'],
-        required = False
-        )
+# Function to run the scheduler
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+# Main function to run the Streamlit app
+def main():
+    st.title("Economic Calendar Notifications")
+
+    # Country selection
+    available_countries = investpy.news.economic_calendar_countries()
+    countries = st.multiselect("Select countries:", available_countries, default=["United States", "India"])
+
+    # Date range selection
+    date_ranges = {
+        "1 Week from Today": 7,
+        "2 Weeks from Today": 14,
+        "1 Month from Today": 30,
+        "2 Months from Today": 60
     }
-)
+    selected_ranges = st.multiselect("Select date ranges:", list(date_ranges.keys()), default=["2 Weeks from Today"])
+    max_days = max([date_ranges[range] for range in selected_ranges], default=0)
 
-st.write("You will notice that we changed our dataframe and added new data. "
-         "Now it is time to visualize what we have annotated!")
+    # User input for email addresses
+    email_list = st.text_area("Enter email addresses (comma-separated):").split(',')
+    email_list = [email.strip() for email in email_list if email.strip()]
 
-st.divider()
+    # Fetch and display economic calendar data
+    if countries and max_days > 0:
+        today = datetime.today()
+        from_date = today.strftime('%d/%m/%Y')
+        to_date = (today + timedelta(days=max_days)).strftime('%d/%m/%Y')
 
-st.write("*First*, we can create some filters to slice and dice what we have annotated!")
+        all_events = []
+        for country in countries:
+            data = get_economic_calendar(country, from_date, to_date)
+            if data is not None:
+                upcoming_events = filter_upcoming_events(data)
+                all_events.extend(upcoming_events)
 
-col1, col2 = st.columns([1,1])
-with col1:
-    issue_filter = st.selectbox("Issues or Non-issues", options = new_df.Issue.unique())
-with col2:
-    category_filter = st.selectbox("Choose a category", options  = new_df[new_df["Issue"]==issue_filter].Category.unique())
+        if all_events:
+            display_events(all_events)
+            schedule_notifications(all_events, email_list)
+            
+            # Start the scheduler in a separate thread
+            scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+            scheduler_thread.start()
+        else:
+            st.write("No upcoming events found for the selected criteria.")
 
-st.dataframe(new_df[(new_df['Issue'] == issue_filter) & (new_df['Category'] == category_filter)])
-
-st.markdown("")
-st.write("*Next*, we can visualize our data quickly using `st.metrics` and `st.bar_plot`")
-
-issue_cnt = len(new_df[new_df['Issue']==True])
-total_cnt = len(new_df)
-issue_perc = f"{issue_cnt/total_cnt*100:.0f}%"
-
-col1, col2 = st.columns([1,1])
-with col1:
-    st.metric("Number of responses",issue_cnt)
-with col2:
-    st.metric("Annotation Progress", issue_perc)
-
-df_plot = new_df[new_df['Category']!=''].Category.value_counts().reset_index()
-
-st.bar_chart(df_plot, x = 'Category', y = 'count')
-
-st.write("Here we are at the end of getting started with streamlit! Happy Streamlit-ing! :balloon:")
-
+if __name__ == "__main__":
+    main()
