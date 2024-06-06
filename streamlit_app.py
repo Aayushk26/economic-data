@@ -24,7 +24,7 @@ def convert_to_ist(time_str):
         return time_str
 
 # Function to display events
-def display_events(events):
+def display_events(events, increase_display_size):
     if events is None:
         st.write("No upcoming events found.")
         return
@@ -48,7 +48,7 @@ def display_events(events):
         # Style the dataframe based on event importance
         def highlight_importance(val):
             if val == 'high':
-                color = 'lightgreen'
+                color = 'lightcoral'  # Change color to light red for high importance
             elif val == 'medium':
                 color = 'lightblue'
             elif val == 'low':
@@ -59,16 +59,22 @@ def display_events(events):
 
         events_styled = events.style.applymap(highlight_importance, subset=['importance'])
 
-        # Display the legend
+        # Display the legend with subtle colors
+        legend_style = "background-color: rgba(240, 240, 240, 0.7); padding: 8px; margin-bottom: 8px;"
         st.markdown(
-            "<div style='background-color:lightgreen;padding:8px;margin-bottom:8px;'>High Importance</div>"
-            "<div style='background-color:lightblue;padding:8px;margin-bottom:8px;'>Medium Importance</div>"
-            "<div style='background-color:lightyellow;padding:8px;margin-bottom:8px;'>Low Importance</div>",
+            "<div style='" + legend_style + "'>"
+            "<div style='background-color:lightcoral;padding:8px;margin-bottom:4px;'>High Importance</div>"
+            "<div style='background-color:lightblue;padding:8px;margin-bottom:4px;'>Medium Importance</div>"
+            "<div style='background-color:lightyellow;padding:8px;margin-bottom:4px;'>Low Importance</div>"
+            "</div>",
             unsafe_allow_html=True
         )
 
-        # Display the styled dataframe
-        st.dataframe(events_styled, width=0)
+        # Display the styled dataframe with increased display size if selected
+        if increase_display_size:
+            st.dataframe(events_styled, width=0)
+        else:
+            st.dataframe(events_styled)
 
     else:
         st.write("No upcoming events found.")
@@ -97,10 +103,13 @@ def main():
     today = datetime.today().strftime('%d/%m/%Y')
     to_date = (datetime.today() + timedelta(days=max_days)).strftime('%d/%m/%Y')
 
+    # Option to increase display size
+    increase_display_size = st.checkbox("Increase display size", value=True)
+
     # Fetch and display economic calendar data
     if countries:
         data = get_economic_calendar(countries, today, to_date)
-        display_events(data)
+        display_events(data, increase_display_size)
 
 if __name__ == "__main__":
     main()
