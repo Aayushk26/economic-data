@@ -45,6 +45,9 @@ def display_events(events):
         # Move IST Time and Day columns to the first two positions
         events = events[['IST Time', 'Day'] + [col for col in events.columns if col not in ['IST Time', 'Day']]]
 
+        # Calculate days from today and add as a new column
+        events['Days from Today'] = (pd.to_datetime(events['date'], format='%d/%m/%Y') - pd.Timestamp('today')).dt.days
+
         # Style the dataframe based on event importance
         def highlight_importance(val):
             if val == 'high':
