@@ -38,8 +38,15 @@ def main():
     countries = st.multiselect("Select countries:", available_countries, default=["United States", "India"])
 
     # Date range selection
+    date_ranges = {
+        "7 days from today": 7,
+        "14 days from today": 14,
+        "1 month from today": 30,
+    }
+    selected_range = st.selectbox("Select date range:", list(date_ranges.keys()), index=1)
+    max_days = date_ranges[selected_range]
     today = datetime.today().strftime('%d/%m/%Y')
-    to_date = (datetime.today() + timedelta(weeks=2)).strftime('%d/%m/%Y')
+    to_date = (datetime.today() + timedelta(days=max_days)).strftime('%d/%m/%Y')
 
     # Fetch and display economic calendar data
     if countries:
