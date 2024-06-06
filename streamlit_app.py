@@ -30,11 +30,20 @@ def display_events(events):
         return
 
     if not events.empty:
+        # Convert time to Indian Standard Time (IST)
+        events['Time'] = events['time'].apply(convert_to_ist)
+
         # Add a column for the day of the event
         events['Day'] = pd.to_datetime(events['date'], format='%d/%m/%Y').dt.strftime('%A')
 
-        # Convert time to Indian Standard Time (IST)
-        events['Time'] = events['time'].apply(convert_to_ist)
+        # Remove id column
+        events = events.drop(columns=['id'])
+
+        # Rename 'zone' column to the corresponding country
+        events = events.rename(columns={'zone': 'Country'})
+
+        # Move Time and Day columns to the first two columns
+        events = events[['Time', 'Day'] + [col for col in events.columns if col not in ['Time', 'Day']]]
 
         st.write("Upcoming Events:")
         st.dataframe(events)
