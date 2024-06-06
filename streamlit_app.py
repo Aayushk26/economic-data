@@ -24,7 +24,7 @@ def convert_to_ist(time_str):
         return time_str
 
 # Function to display events
-def display_events(events, full_screen):
+def display_events(events):
     if events is None:
         st.write("No upcoming events found.")
         return
@@ -70,11 +70,8 @@ def display_events(events, full_screen):
             unsafe_allow_html=True
         )
 
-        # Display the styled dataframe with full screen option
-        if full_screen:
-            st.dataframe(events_styled, width=0)
-        else:
-            st.dataframe(events_styled)
+        # Display the styled dataframe
+        st.dataframe(events_styled)
 
     else:
         st.write("No upcoming events found.")
@@ -103,13 +100,10 @@ def main():
     today = datetime.today().strftime('%d/%m/%Y')
     to_date = (datetime.today() + timedelta(days=max_days)).strftime('%d/%m/%Y')
 
-    # Option to display in full screen
-    full_screen = st.checkbox("Full screen", value=False, help="Check to display the table in full screen mode.")
-
     # Fetch and display economic calendar data
     if countries:
         data = get_economic_calendar(countries, today, to_date)
-        display_events(data, full_screen)
+        display_events(data)
 
 if __name__ == "__main__":
     main()
